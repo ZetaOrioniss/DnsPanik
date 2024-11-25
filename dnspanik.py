@@ -4,6 +4,7 @@
 
 import sys
 import dns.resolver
+import requests
 import concurrent.futures
 import time
 import colorama
@@ -86,12 +87,76 @@ def subdomain_req(file_path):
 
     j = 0
 
-    for i in valid_url_tab:
+    if valid_url_tab == 0:
 
-        print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {valid_subdomain_tab[j][:-1]:<10} {' ' * 10} | {' ' * 5} {i}")
+        print("0 subdomain available")
 
-        j += 1
+    else:
 
+        for i in valid_url_tab:
+
+            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {valid_subdomain_tab[j][:-1]:<10} {' ' * 10} | {' ' * 5} {i}")
+
+            j += 1
+    
+    return 0
+
+def directories_req(file_path):
+
+    custom_parse_args()
+
+    valid_url_tab = []
+    valid_dir_tab = []
+
+    with open(file_path, "r") as wordlist:
+
+        url = sys.argv[2]
+
+        print("_" * 65)
+        print(f"{' ' * 5} Status {' ' * 5} | {' ' * 5} Directory {' ' * 10} | {' ' * 5} Url")
+        print("_" * 65)
+
+
+        for line in wordlist:
+
+            current_dir = f"{url}/{line[:-1]}"     # domaine complet en cours de test (sous-domaine.domaine.xx)
+
+            try:
+
+                answer = requests.get(current_dir)
+
+                if answer.status_code == 200:
+
+                    if current_dir not in valid_url_tab:
+
+                        valid_url_tab.append(current_dir)
+                        valid_dir_tab.append(line)
+
+                        if "-v" in sys.argv:
+
+                            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {green}{line[:-1]:<10}{reset} {' ' * 9} | {' ' * 5} {current_dir}")
+
+
+            except:
+
+                if "-v" in sys.argv:
+                    print(f"{' ' * 5}{yellow} ??? {reset}{ ' ':<8} | {' ' * 5} {line[:-1]:<10} {' ' * 9} | {' ' * 5} {current_dir}")
+
+    j = 0
+
+    if len(valid_url_tab) == 0:
+
+        print("0 directory available")
+
+    else:
+
+        for i in valid_url_tab:
+
+            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {valid_dir_tab[j][:-1]:<10} {' ' * 10} | {' ' * 5} {i}")
+
+            j += 1
+    
+    return 0
 
 if __name__ == "__main__":
     
@@ -106,6 +171,18 @@ if __name__ == "__main__":
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
 
                 for result in executor.map(subdomain_req, filename):
+
+                    print(result)
+            
+            total_time = time.time() - time_s
+
+            print( f"{total_time:2f}s" )
+        
+        if sys.argv[1] == "-dir":
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+
+                for result in executor.map(directories_req, filename):
 
                     print(result)
             
