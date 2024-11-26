@@ -15,6 +15,26 @@ red = colorama.Fore.RED
 yellow = colorama.Fore.YELLOW
 reset = colorama.Fore.RESET
 
+def help_display():
+
+    print("""
+    
+Affichage de l'aide:\n\n
+
+Sous-domaines:
+
+    Exécution: python3 dnspanik.py -sub <example.com> </path/to/wordlist.txt>\n--> Énumération de sous-domaine du site example.fr\n\n
+
+Répertoires:
+
+    Exécution: python3 dnspanik.py -dir <https://example.com> </path/to/wordlist.txt>\n--> Énumération des répertoires du site example.fr\n\n
+
+Option(s) Supplémentaire(s):
+
+    -v          --> active le mode verbeux.
+
+    """)
+
 def custom_parse_args():
 
     args_lst = ["-w", "-v", "-u", "--url", "-sub", "-dir"]
@@ -29,7 +49,8 @@ def custom_parse_args():
 
             if args not in args_lst:
 
-                print(f"flag {args} inconnu"); exit(0)
+                print(f"Argument '{args}' inconnu"); help_display()
+                exit(0)
 
 
 def subdomain_req(file_path):
@@ -121,26 +142,30 @@ def directories_req(file_path):
 
             current_dir = f"{url}/{line[:-1]}"     # domaine complet en cours de test (sous-domaine.domaine.xx)
 
-            try:
+            #try:
 
-                answer = requests.get(current_dir)
+            answer = requests.get(current_dir)
 
-                if answer.status_code == 200:
+            if answer.status_code == 200:
 
-                    if current_dir not in valid_url_tab:
+                if current_dir not in valid_url_tab:
 
-                        valid_url_tab.append(current_dir)
-                        valid_dir_tab.append(line)
+                    valid_url_tab.append(current_dir)
+                    valid_dir_tab.append(line)
 
-                        if "-v" in sys.argv:
+                    #print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {green}{line[:-1]:<10}{reset} {' ' * 9} | {' ' * 5} {current_dir}")
 
-                            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {green}{line[:-1]:<10}{reset} {' ' * 9} | {' ' * 5} {current_dir}")
-
-
-            except:
+            else:
 
                 if "-v" in sys.argv:
-                    print(f"{' ' * 5}{yellow} ??? {reset}{ ' ':<8} | {' ' * 5} {line[:-1]:<10} {' ' * 9} | {' ' * 5} {current_dir}")
+
+                    print(f"{' ' * 5}{yellow} {answer.status_code} {reset}{ ' ':<8} | {' ' * 5} {green}{line[:-1]:<10}{reset} {' ' * 9} | {' ' * 5} {current_dir}")
+
+
+            # except:
+
+            #     if "-v" in sys.argv:
+            #         print(f"{' ' * 5}{yellow} ??? {reset}{ ' ':<8} | {' ' * 5} {line[:-1]:<10} {' ' * 9} | {' ' * 5} {current_dir}")
 
     j = 0
 
@@ -152,7 +177,7 @@ def directories_req(file_path):
 
         for i in valid_url_tab:
 
-            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {valid_dir_tab[j][:-1]:<10} {' ' * 10} | {' ' * 5} {i}")
+            print(f"{' ' * 5}{green} 200 {reset}{ ' ':<8} | {' ' * 5} {green}{valid_dir_tab[j][:-1]:<10} {reset}{' ' * 10} | {' ' * 5} {i}")
 
             j += 1
     
