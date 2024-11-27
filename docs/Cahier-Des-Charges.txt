@@ -39,7 +39,19 @@ Entitées:
 
 2/ Description des entitées:
 
-    Domaine: c'est l'url du site web ciblé
-    Répertoire: c'est un dossier constituant l'architecture du site web
-    Sous-domaine: c'est le sous-domaine du site web
-    État du domaine: c'est l'existance du Domaine
+        Domaine: id, url, etat, statut du scan
+        Répertoire: id, chemin, etat, domaine correspondant
+        Sous-domaine: id, sous domaine, etat, domaine correspondant
+
+
+        Supplément:
+                historique: id, type de scan, date, domaine correspondant
+
+
+3/ Relation entre les entités:
+
+        Domaine <-> répertoire: inclu:
+                Un répertoire existe dans un domaine
+        
+        Sous-domaine <-> domaine: exister:
+                Un sous-domaine existe dans un domaine
