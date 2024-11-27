@@ -1,0 +1,6 @@
+Domaine: id, url, etat, statut du scan
+inclu, XX Domaine, Répertoire
+Répertoire: id, chemin, etat, domaine correspondant
+
+Sous-domaine: id, sous domaine, etat, domaine correspondant
+exister, XX Sous-domaine, XX Domaine

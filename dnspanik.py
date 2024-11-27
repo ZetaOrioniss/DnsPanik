@@ -18,26 +18,37 @@ reset = colorama.Fore.RESET
 def help_display():
 
     print("""
-    
-Affichage de l'aide:\n\n
+===== Aide de l'outil dnspanik =====
+\n
+Usage :
 
-Sous-domaines:
+    python3 dnspanik.py [option] <cible> </path/to/wordlist.txt>
 
-    Exécution: python3 dnspanik.py -sub <example.com> </path/to/wordlist.txt>\n--> Énumération de sous-domaine du site example.fr\n\n
+Commandes principales :
 
-Répertoires:
+  -s, --sub    Énumération des sous-domaines d'un site.
+          Exemple : python3 dnspanik.py --sub example.com /path/to/wordlist.txt
+          --> Réalise l'énumération des sous-domaines pour "example.com"
 
-    Exécution: python3 dnspanik.py -dir <https://example.com> </path/to/wordlist.txt>\n--> Énumération des répertoires du site example.fr\n\n
+  -d, --dir    Énumération des répertoires d'un site.
+          Exemple : python3 dnspanik.py --dir https://example.com /path/to/wordlist.txt
+          --> Réalise l'énumération des répertoires pour "example.com"
 
-Option(s) Supplémentaire(s):
+Option(s) supplémentaire(s):
 
-    -v  |  --verbose        --> active le mode verbeux.
+  -v, --verbose    Active le mode verbeux pour afficher des détails supplémentaires lors de l'exécution.
 
+Exemple complet:
+
+    python3 dnspanik.py --sub example.com /path/to/wordlist.txt -v
+    --> Effectue une énumération des sous-domaines avec affichage détaillé.
+
+======================================
     """)
 
 def custom_parse_args():
 
-    args_lst = ["-v", "--verbose", "-sub", "-dir"]
+    args_lst = ["-v", "--verbose", "--sub", "--dir", "-d", "-s"]
 
     if len(sys.argv) > 5:
 
@@ -166,12 +177,20 @@ def directories_req(file_path):
                 else:
 
                     continue
+            
+            except requests.exceptions.MissingSchema as e:
 
+                print(f"Err: Schema manquant dans l'url.\nVoulez-vous dire 'http://www.{url}' ?")
+                exit(0)
+
+            except (requests.exceptions.ConnectionError):
+
+                print(f"Err: Impossible de se connecter à '{url}'\nVeuillez vérifier l'url.\n")
+                exit(0)
 
             except:
 
-                if "-v" or "--verbose" in sys.argv:
-                    print(f"{' ' * 5}{yellow} ??? {reset}{ ' ':<8} | {' ' * 5} {line[:-1]:<10} {' ' * 9} | {' ' * 5} {current_dir}")
+                print("fatal err.")
         
         print("\nRecap:\n\n")
         print(table)
@@ -206,7 +225,7 @@ if __name__ == "__main__":
 
         time_s = time.time()
 
-        if sys.argv[1] == "-sub":
+        if sys.argv[1] == "--sub" or sys.argv[1] == "-s":
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
 
@@ -218,7 +237,7 @@ if __name__ == "__main__":
 
             print( f"{total_time:2f}s" )
         
-        if sys.argv[1] == "-dir":
+        if sys.argv[1] == "--dir" or sys.argv[1] == "-d":
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
 
@@ -239,4 +258,8 @@ if __name__ == "__main__":
         print("Err: fichier non trouvé.\nPressez Entrer pour continuer...")
         input()
         help_display()
+        exit(0)
+    
+    except:
+
         exit(0)
