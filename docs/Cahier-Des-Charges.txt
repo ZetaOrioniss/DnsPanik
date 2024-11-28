@@ -11,8 +11,6 @@ Entitées:
     -Les domaines
     -Les sous-domaines
     -Les répertoires
-    -Les statuts des scans
-    -L'état des domaines
 
 
 1/ Listes des Tâches nécessaires
