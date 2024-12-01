@@ -66,6 +66,18 @@ def custom_parse_args():
     return 0
 
 
+def valid_url_verif(url):
+
+    try:
+
+        req = dns.resolver.resolve(url)
+
+    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
+
+        print("err: invalid url '{}'".format(url))
+        exit(0)
+
+
 def subdomain_req(file_path):
 
     custom_parse_args()
@@ -81,11 +93,14 @@ def subdomain_req(file_path):
 
         url = sys.argv[2]
 
+        valid_url_verif(url)
+
         print("[!] Starting subdomain enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
 
         for line in wordlist:
 
             current_subdomain = f"{line[:-1]}.{url}"        # domaine complet en cours de test (sous-domaine.domaine.xx)
+
 
             try:
 
@@ -107,6 +122,7 @@ def subdomain_req(file_path):
                         table.add_row(["+", line[:-1], current_subdomain])
 
             except dns.resolver.NoAnswer:
+            
 
                 if "-v" or "--verbose" in sys.argv:
 
@@ -258,8 +274,4 @@ if __name__ == "__main__":
         print("Err: fichier non trouvé.\nPressez Entrer pour continuer...")
         input()
         help_display()
-        exit(0)
-    
-    except:
-
         exit(0)
