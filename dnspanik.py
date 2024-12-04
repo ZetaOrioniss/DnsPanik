@@ -18,7 +18,7 @@ yellow = colorama.Fore.YELLOW
 reset = colorama.Fore.RESET
 
 
-db_file = "default_db.db"
+db_file = "default.db"
 
 
 
@@ -38,18 +38,48 @@ def db_exists(database):
 
             cursor = db.cursor()
 
-            create_tables = ["CREATE TABLE domain (pk_url INTEGER PRIMARY KEY NOT NULL,d_state VARCHAR(5),scan_state VARCHAR(30));", "CREATE TABLE subdomain (pk_url INTEGER PRIMARY KEY NOT NULL, d_state VARCHAR(5), scan_state VARCHAR(30), fk_url_domain VARCHAR(250) NOT NULL, FOREIGN KEY (fk_url_domain) REFERENCES domain(pk_url));", "CREATE TABLE directories (id_directory INTEGER PRIMARY KEY NOT NULL, dir_state VARCHAR(5), fk_url_domain_d VARCHAR(250), FOREIGN KEY (fk_url_domain_d) REFERENCES domain(pk_url));"]
+            create_tables = [
+                
+                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50), d_state VARCHAR(5),scan_state VARCHAR(30));" 
+            
+                ]
 
             for sql_request in create_tables:
 
                 cursor.execute(sql_request)
+
         # except:
 
         #     print("Err: an error occured when creating database\n"); exit(0)
 
 
+def unicity_verif(database, domain):
 
-def custom_parse_args():            
+    with sqlite3.connect(database) as db:
+
+        cursor = db.cursor()
+
+        sql_req = f"SELECT domain_url FROM domain WHERE domain_url = '{domain}';"
+
+        req_rslt = cursor.execute(sql_req)
+
+        if req_rslt.fetchone():
+
+            print("[!] Data found for the same domain.\nLecture des tables..."); exit(0)
+        else:
+            pass
+
+def insert_domain(database, url_domain, domain_state, scan_state):
+
+    with sqlite3.connect(database) as db:
+
+        cursor = db.cursor()
+
+        sql_req = f"INSERT INTO domain (domain_url, d_state, scan_state) VALUES ('{url_domain}', '{domain_state}', '{scan_state}');"
+
+        cursor.execute(sql_req)
+
+def custom_parse_args():
 
     # Vérifie si les arguments en ligne de commande sont corrects et valides.
     # Affiche un message d'erreur si un argument est inconnu ou s'il y a trop d'arguments.
@@ -80,16 +110,37 @@ def valid_url_verif(url):
 
         req = dns.resolver.resolve(url)
 
+        return "alive"
+
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
 
         print("err: invalid url '{}'".format(url))
+
+        return "dead"
+
         exit(0)
 
+def line_counter(file):
+
+    maxlines = 0
+
+    with open(file, "r") as file:
+
+        for line in file:
+
+            maxlines += 1
+    
+    return maxlines
 
 def subdomain_req(file_path):                           # Fonction d'énumération de sous-domaines
 
+
     custom_parse_args()
 
+    url = sys.argv[2]
+    domain_state = valid_url_verif(url)
+    end_of_file = line_counter(file_path)
+    current_line = 0
     valid_url_tab = []
     valid_subdomain_tab = []
     
@@ -99,13 +150,13 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
 
     with open(file_path, "r") as wordlist:              # Ouvre le fichier spécifié par l'utilisateur en mode lecture
 
-        url = sys.argv[2]
-
         valid_url_verif(url)
 
         print("[!] Starting subdomain enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
 
         for line in wordlist:                           # On effectue un traitement avec chaque ligne du fichier une par une
+
+            current_line += 1
 
             current_subdomain = f"{line[:-1]}.{url}"        # domaine complet en cours de test (sous-domaine.domaine.xx)
 
@@ -143,6 +194,23 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
             except dns.exception.DNSException as e:
                 
                 continue
+
+            except KeyboardInterrupt:
+
+                break
+
+        if current_line == end_of_file:
+
+            scan_state = "Complete with {}".format(file_path)
+
+            #print(url, domain_state, scan_state);exit(0)
+            unicity_verif(db_file, url)
+            insert_domain(db_file, url, domain_state, scan_state)
+
+        else:
+
+            scan_state = "In process with {}".format(file_path)
+            insert_domain(db_file, url, domain_state, scan_state)
 
     print("Recap:\n\n")
     print(table)
@@ -250,8 +318,6 @@ Exemple complet:
 
 if __name__ == "__main__":
 
-    db_exists(db_file)
-
     print("""
     
 ▓█████▄  ███▄    █   ██████  ██▓███   ▄▄▄       ███▄    █  ██▓ ██ ▄█▀
@@ -267,6 +333,8 @@ if __name__ == "__main__":
     
     """)
 
+    db_exists(db_file)
+
     if len(sys.argv) <= 2:
 
         help_display();exit(0)
@@ -274,15 +342,14 @@ if __name__ == "__main__":
     if "-h" in sys.argv or "--help" in sys.argv:
 
         help_display();exit(0)
-    
-    try:
 
+    try:
 
         filename = [f"{sys.argv[3]}"]
 
         time_s = time.time()
 
-        if sys.argv[1] == "--sub" or sys.argv[1] == "-s":
+        if sys.argv[1] == "--sub":
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
 
@@ -294,7 +361,7 @@ if __name__ == "__main__":
 
             print( f"{total_time:2f}s" )
         
-        if sys.argv[1] == "--dir" or sys.argv[1] == "-d":
+        if sys.argv[1] == "--dir":
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
 
