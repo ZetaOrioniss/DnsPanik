@@ -40,7 +40,7 @@ def db_exists(database):
 
             create_tables = [
                 
-                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50), d_state VARCHAR(5),scan_state VARCHAR(30));" 
+                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50) UNIQUE, d_state VARCHAR(5),scan_state VARCHAR(30));" 
             
                 ]
 
@@ -65,19 +65,41 @@ def unicity_verif(database, domain):
 
         if req_rslt.fetchone():
 
-            print("[!] Data found for the same domain.\nLecture des tables..."); exit(0)
+            print("[!] Data found for the same domain.\nLecture des tables...\n")
+
+            enum_continue = input("\nContinue enumeration with actuel wordlist ? y/n: ")
+
+            if enum_continue == "y":
+                
+                pass
+
+            elif enum_continue == "n":
+
+                exit(0)
+
+            else:
+
+                print("Err: unknown choice '{}'".format(enum_continue))
+                exit(0)
         else:
             pass
 
 def insert_domain(database, url_domain, domain_state, scan_state):
 
-    with sqlite3.connect(database) as db:
+    try:
 
-        cursor = db.cursor()
+        with sqlite3.connect(database) as db:
 
-        sql_req = f"INSERT INTO domain (domain_url, d_state, scan_state) VALUES ('{url_domain}', '{domain_state}', '{scan_state}');"
+            cursor = db.cursor()
 
-        cursor.execute(sql_req)
+            sql_req = f"INSERT INTO domain (domain_url, d_state, scan_state) VALUES ('{url_domain}', '{domain_state}', '{scan_state}');"
+
+            cursor.execute(sql_req)
+
+    except sqlite3.IntegrityError:
+
+        #domaine deja existant dans la table. On ne l'ajoute pas.
+        pass
 
 def custom_parse_args():
 
@@ -104,7 +126,7 @@ def custom_parse_args():
 
 def valid_url_verif(url):
 
-    # Cette fonction valide que le domaine fourni est accessible via DNS. Si ce n'est pas le cas, elle affiche un message d'erreur et arrête le script.
+    # Cette fonction valide que le domaine fourni est accessible. Si ce n'est pas le cas, elle affiche un message d'erreur et arrête le script.
 
     try:
 
@@ -153,6 +175,8 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
         valid_url_verif(url)
 
         print("[!] Starting subdomain enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
+
+        unicity_verif(db_file, url)
 
         for line in wordlist:                           # On effectue un traitement avec chaque ligne du fichier une par une
 
@@ -204,7 +228,6 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
             scan_state = "Complete with {}".format(file_path)
 
             #print(url, domain_state, scan_state);exit(0)
-            unicity_verif(db_file, url)
             insert_domain(db_file, url, domain_state, scan_state)
 
         else:
