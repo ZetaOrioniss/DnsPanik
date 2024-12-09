@@ -40,7 +40,9 @@ def db_exists(database):
 
             create_tables = [
                 
-                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50) UNIQUE, d_state VARCHAR(5),scan_state VARCHAR(30));" 
+                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50) UNIQUE, d_state VARCHAR(5));",
+
+                "CREATE TABLE subdomain (id_domain INTEGER, id_subdomain INTEGER PRIMARY KEY AUTOINCREMENT, subdomain VARCHAR(20), subdomain_state VARCHAR(5), FOREIGN KEY (id_domain) REFERENCES domain(id));"
             
                 ]
 
@@ -51,7 +53,6 @@ def db_exists(database):
         # except:
 
         #     print("Err: an error occured when creating database\n"); exit(0)
-
 
 def unicity_verif(database, domain):
 
@@ -67,7 +68,7 @@ def unicity_verif(database, domain):
 
             print("[!] Data found for the same domain.\nLecture des tables...\n")
 
-            enum_continue = input("\nContinue enumeration with actuel wordlist ? y/n: ")
+            enum_continue = input("\nContinue enumeration with current wordlist ? y/n: ")
 
             if enum_continue == "y":
                 
@@ -84,7 +85,7 @@ def unicity_verif(database, domain):
         else:
             pass
 
-def insert_domain(database, url_domain, domain_state, scan_state):
+def insert_domain(database, url_domain, domain_state):
 
     try:
 
@@ -92,13 +93,33 @@ def insert_domain(database, url_domain, domain_state, scan_state):
 
             cursor = db.cursor()
 
-            sql_req = f"INSERT INTO domain (domain_url, d_state, scan_state) VALUES ('{url_domain}', '{domain_state}', '{scan_state}');"
+            sql_req = f"INSERT INTO domain (domain_url, d_state) VALUES ('{url_domain}', '{domain_state}');"
 
             cursor.execute(sql_req)
 
     except sqlite3.IntegrityError:
 
         #domaine deja existant dans la table. On ne l'ajoute pas.
+        pass
+
+def insert_subdomain(database, sub_state, subdomain, url):
+
+    try:
+
+        with sqlite3.connect(database) as db:
+
+            cursor = db.cursor()
+
+            sql_id_domain = f"SELECT id from domain WHERE domain_url='{url}';"
+
+            result_sql_id = cursor.execute(sql_id_domain).fetchone()[0]
+
+            sql_req = f"INSERT INTO subdomain (id_domain, subdomain, subdomain_state)  VALUES ('{result_sql_id}', '{subdomain}', '{sub_state}');"
+
+            cursor.execute(sql_req)
+
+    except sqlite3.IntegrityError:
+
         pass
 
 def custom_parse_args():
@@ -137,9 +158,6 @@ def valid_url_verif(url):
     except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
 
         print("err: invalid url '{}'".format(url))
-
-        return "dead"
-
         exit(0)
 
 def line_counter(file):
@@ -177,6 +195,7 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
         print("[!] Starting subdomain enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
 
         unicity_verif(db_file, url)
+        insert_domain(db_file, url, domain_state)
 
         for line in wordlist:                           # On effectue un traitement avec chaque ligne du fichier une par une
 
@@ -195,6 +214,7 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
 
                         valid_url_tab.append(current_subdomain)
                         valid_subdomain_tab.append(line)
+                        insert_subdomain(db_file, "alive", line[:-1], sys.argv[2])
                         if "-v" in sys.argv or "--verbose" in sys.argv:          # si le mode verbeux est voulu, on affiche chaque résultat pertinent
 
                             print(f"{' ' * 5}{green} + {reset} - {green}{line[:-1]}.{url}{reset}")
@@ -222,18 +242,6 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
             except KeyboardInterrupt:
 
                 break
-
-        if current_line == end_of_file:
-
-            scan_state = "Complete with {}".format(file_path)
-
-            #print(url, domain_state, scan_state);exit(0)
-            insert_domain(db_file, url, domain_state, scan_state)
-
-        else:
-
-            scan_state = "In process with {}".format(file_path)
-            insert_domain(db_file, url, domain_state, scan_state)
 
     print("Recap:\n\n")
     print(table)
