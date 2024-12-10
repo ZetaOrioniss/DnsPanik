@@ -1,0 +1,7 @@
+Sous-domaine: id sous-domaines, id domaine, sous-domaine, etat
+:
+Répertoire: id répertoire, id domaine, répertoire, etat
+
+exister, 00 Sous-domaine, 0N Domaine
+Domaine: id, url, etat, type de scan
+inclu, 0N Domaine, 00 Répertoire

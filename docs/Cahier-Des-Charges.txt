@@ -1,0 +1,52 @@
+
+Description de l'outil:
+
+Effectue l’énumération de sous-domaines et de répertoires sur des domaines spécifiés, tout en stockant les résultats dans une base de données SQLite. Il vérifie l’existence d’une base de données, la crée si nécessaire, et insère des informations comme les sous-domaines et répertoires trouvés avec leur état (actif ou non). Il propose un mode verbeux pour afficher les résultats en temps réel et génère des tableaux récapitulatifs pour plus de lisibilité. Il prend en charge des fichiers wordlist pour tester différents sous-domaines ou répertoires et peut fonctionner avec des threads pour optimiser les performances. Enfin, il offre des options en ligne de commande pour personnaliser les scans ou supprimer la base de données existante.
+
+
+Entitées:
+
+    -Les domaines
+    -Les sous-domaines
+    -Les répertoires
+
+
+1/ Listes des Tâches nécessaires
+
+    - Gestion des domaines analysés:
+
+            -Il faut enregistrer un domaine
+
+    - Enregistrer les répertoires d'un domaine:
+
+            -IL faut enregistrer le répertoires testé
+            -Il faut préciser si le répertoires testé est existants ou non (état)
+   
+    - Enregistrer les sous-domaines:
+
+            -Il faut enregistrer un domaine
+            -Il faut enregistrer le sous-domaine testé
+            -Il faut préciser si le sous-domaine testé est existants ou non (état)
+
+    -Supprimer la base:
+
+            -Il faut supprimer la base de donnée entièrement.
+
+2/ Description des entitées:
+
+        Domaine: id, url, etat, type de scan
+        Répertoire: id répertoire, id domaine, répertoire, etat
+        Sous-domaine: id sous-domaines, id domaine, sous-domaine, etat
+
+
+        Supplément:
+                historique: id, type de scan, date, domaine correspondant
+
+
+3/ Relation entre les entités:
+
+        Domaine <-> répertoire: inclu:
+                Un répertoire existe dans un domaine
+        
+        Sous-domaine <-> domaine: exister:
+                Un sous-domaine existe dans un domaine
