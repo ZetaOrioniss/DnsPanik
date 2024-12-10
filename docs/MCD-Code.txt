@@ -1,7 +1,0 @@
-exister, 00 Sous-domaine, 0N Domaine
-Domaine: id, url, etat, statut du scan
-:
-
-Sous-domaine: id, sous domaine, etat, domaine correspondant
-inclu, 0N Domaine, 00 Répertoire
-Répertoire: id, chemin, etat, domaine correspondant
