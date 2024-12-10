@@ -30,7 +30,7 @@ def db_exists(database):
 
     else:
 
-        print("[!] Database not founded. Creating one...\n")
+        print("[!] Absent database. Creating one...\n")
 
         #try:
 
@@ -40,9 +40,28 @@ def db_exists(database):
 
             create_tables = [
                 
-                "CREATE TABLE domain (id INTEGER PRIMARY KEY AUTOINCREMENT, domain_url VARCHAR(50) UNIQUE, d_state VARCHAR(5));",
+                """CREATE TABLE domain (
 
-                "CREATE TABLE subdomain (id_domain INTEGER, id_subdomain INTEGER PRIMARY KEY AUTOINCREMENT, subdomain VARCHAR(20), subdomain_state VARCHAR(5), FOREIGN KEY (id_domain) REFERENCES domain(id));"
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    domain_url VARCHAR(50) UNIQUE, 
+                    d_state VARCHAR(5), 
+                    scan_type VARCHAR(3));""",
+
+                """CREATE TABLE subdomain (
+
+                    id_domain INTEGER, 
+                    id_subdomain INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    subdomain VARCHAR(20) UNIQUE, 
+                    subdomain_state VARCHAR(5), 
+                    FOREIGN KEY (id_domain) REFERENCES domain(id));""",
+
+                """CREATE TABLE directory (
+                
+                    id_domain INTEGER,
+                    id_directory INTEGER PRIMARY KEY AUTOINCREMENT,
+                    directory VARCHAR(15) UNIQUE,
+                    dir_state VARCHAR(5),
+                    FOREIGN KEY (id_domain) REFERENCES domain(id));"""
             
                 ]
 
@@ -54,7 +73,29 @@ def db_exists(database):
 
         #     print("Err: an error occured when creating database\n"); exit(0)
 
-def unicity_verif(database, domain):
+def table_reading(database, table, id_domain):
+
+    with sqlite3.connect(database) as db:
+
+        cursor = db.cursor()
+
+        if table == "dir":
+
+            cursor.execute(f"SELECT directory FROM directory WHERE id_domain='{id_domain}';").fetchall()
+
+            input("")
+
+        if table == "sub":
+
+            req = cursor.execute(f"SELECT subdomain FROM subdomain WHERE id_domain='{id_domain}';")
+
+            print(req.fetchall())
+
+            input("")
+
+
+
+def unicity_verif(database, domain, table, id_domain):
 
     with sqlite3.connect(database) as db:
 
@@ -66,7 +107,9 @@ def unicity_verif(database, domain):
 
         if req_rslt.fetchone():
 
-            print("[!] Data found for the same domain.\nLecture des tables...\n")
+            print("[!] Data found for the same domain.\nReading table...\n")
+
+            table_reading(db_file, table, id_domain)
 
             enum_continue = input("\nContinue enumeration with current wordlist ? y/n: ")
 
@@ -85,7 +128,7 @@ def unicity_verif(database, domain):
         else:
             pass
 
-def insert_domain(database, url_domain, domain_state):
+def insert_domain(database, url_domain, domain_state, scan_type):
 
     try:
 
@@ -93,14 +136,19 @@ def insert_domain(database, url_domain, domain_state):
 
             cursor = db.cursor()
 
-            sql_req = f"INSERT INTO domain (domain_url, d_state) VALUES ('{url_domain}', '{domain_state}');"
+            data = [
 
-            cursor.execute(sql_req)
+                (url_domain, domain_state, scan_type)
+
+            ]
+
+            cursor.executemany("INSERT INTO domain (domain_url, d_state, scan_type) VALUES (?, ?, ?)", data)
 
     except sqlite3.IntegrityError:
 
         #domaine deja existant dans la table. On ne l'ajoute pas.
         pass
+
 
 def insert_subdomain(database, sub_state, subdomain, url):
 
@@ -114,20 +162,50 @@ def insert_subdomain(database, sub_state, subdomain, url):
 
             result_sql_id = cursor.execute(sql_id_domain).fetchone()[0]
 
-            sql_req = f"INSERT INTO subdomain (id_domain, subdomain, subdomain_state)  VALUES ('{result_sql_id}', '{subdomain}', '{sub_state}');"
+            data = [
 
-            cursor.execute(sql_req)
+                (result_sql_id, subdomain, sub_state)
+
+            ]
+
+            cursor.executemany("INSERT INTO subdomain (id_domain, subdomain, subdomain_state)  VALUES (?, ?, ?)", data)
 
     except sqlite3.IntegrityError:
 
         pass
+
+def insert_directories(database, url, directory, dir_state):
+
+    try:
+
+        with sqlite3.connect(database) as db:
+
+            cursor = db.cursor()
+
+            sql_id_domain = f"SELECT id from domain WHERE domain_url='{url}';"
+
+            result_sql_id = cursor.execute(sql_id_domain).fetchone()[0]
+
+            data = [
+
+                (result_sql_id, directory, dir_state)
+
+            ]
+
+            cursor.executemany("INSERT INTO directory (id_domain, directory, dir_state )  VALUES (?, ?, ?)", data)
+
+    except sqlite3.IntegrityError:
+
+        pass
+
+
 
 def custom_parse_args():
 
     # Vérifie si les arguments en ligne de commande sont corrects et valides.
     # Affiche un message d'erreur si un argument est inconnu ou s'il y a trop d'arguments.
 
-    args_lst = ["-v", "--verbose", "--sub", "--dir", "-d", "-s" "-h" "--help"]
+    args_lst = ["-v", "--verbose", "--sub", "--dir", "-d", "-s", "-h", "--help", "--delete"]
 
     if len(sys.argv) > 5:           # Le programme attend au maximum 4 arguments. On écrit 5 car le lanceur compte comme 0.
 
@@ -179,8 +257,6 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
 
     url = sys.argv[2]
     domain_state = valid_url_verif(url)
-    end_of_file = line_counter(file_path)
-    current_line = 0
     valid_url_tab = []
     valid_subdomain_tab = []
     
@@ -194,12 +270,10 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
 
         print("[!] Starting subdomain enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
 
-        unicity_verif(db_file, url)
-        insert_domain(db_file, url, domain_state)
+        insert_domain(db_file, url, domain_state, "sub")
+        
 
         for line in wordlist:                           # On effectue un traitement avec chaque ligne du fichier une par une
-
-            current_line += 1
 
             current_subdomain = f"{line[:-1]}.{url}"        # domaine complet en cours de test (sous-domaine.domaine.xx)
 
@@ -251,7 +325,8 @@ def subdomain_req(file_path):                           # Fonction d'énumérati
 def directories_req(file_path):                         # Fonction d'énumération des répertoires d'un domaine
 
     custom_parse_args()
-
+   
+    url = sys.argv[2]
     valid_url_tab = []
     valid_dir_tab = []
 
@@ -260,7 +335,7 @@ def directories_req(file_path):                         # Fonction d'énumérati
 
     with open(file_path, "r") as wordlist:               # Ouverture du fichier spécifié par l'utilisateur en mode lecture
 
-        url = sys.argv[2]
+        insert_domain(db_file, url, "alive", "dir")
 
         print("[!] Starting directory enumeration...\n[+] target url: {}\n[+] wordlist: {}\n".format(url, file_path))
 
@@ -279,14 +354,16 @@ def directories_req(file_path):                         # Fonction d'énumérati
 
                     if current_dir not in valid_url_tab:      # Si le répertoire en cours de test est valide et n'est pas dans le tableau des valides, on l'inscrit
 
+                        insert_directories(db_file, url, line[:-1], "alive")
+
                         valid_url_tab.append(current_dir)
                         valid_dir_tab.append(line)
 
                         if "-v" or "--verbose" in sys.argv: # gestion du mode verbeux
 
-                            print(f"{' ' * 5}{green} 200 {reset} - {green}/{line[:-1]}{reset}")
+                            print(f"{' ' * 5}{green} + {reset} - {green}/{line[:-1]}{reset}")
 
-                        table.add_row(["200", line[:-1]])       # inscription dans le tableau récapitulatif
+                        table.add_row(["+", line[:-1]])       # inscription dans le tableau récapitulatif
 
                 else:
 
@@ -302,9 +379,6 @@ def directories_req(file_path):                         # Fonction d'énumérati
                 print(f"Err: Impossible de se connecter à '{url}'\nVeuillez vérifier l'url.\n")
                 exit(0)
 
-            except:
-
-                print("fatal err.")
         
         print("\nRecap:\n\n")
         print(table)
@@ -364,18 +438,27 @@ if __name__ == "__main__":
     
     """)
 
-    db_exists(db_file)
-
-    if len(sys.argv) <= 2:
-
-        help_display();exit(0)
-
-    if "-h" in sys.argv or "--help" in sys.argv:
-
-        help_display();exit(0)
-
     try:
 
+    
+        if len(sys.argv) < 2:
+
+            help_display();exit(0)
+
+        if "-h" in sys.argv or "--help" in sys.argv:
+
+            help_display();exit(0)
+
+        if "--delete" in sys.argv:
+
+            os.remove(db_file)
+            print("[!] Database successfully removed.\n")
+            exit(0)
+
+        
+
+        db_exists(db_file)
+        
         filename = [f"{sys.argv[3]}"]
 
         time_s = time.time()
@@ -403,7 +486,7 @@ if __name__ == "__main__":
             total_time = time.time() - time_s
 
             print( f"{total_time:2f}s" )
-    
+        
     except KeyboardInterrupt:
 
         exit(0)
@@ -414,3 +497,6 @@ if __name__ == "__main__":
         input()
         help_display()
         exit(0)
+    except IndexError:
+
+        print("Execution command order not respected"); help_display(); exit(0)
