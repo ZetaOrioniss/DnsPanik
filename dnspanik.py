@@ -401,17 +401,18 @@ Usage :
 
 Commandes principales :
 
--s, --sub    Énumération des sous-domaines d'un site.
+--sub    Énumération des sous-domaines d'un site.
         Exemple : python3 dnspanik.py --sub example.com /path/to/wordlist.txt
         --> Réalise l'énumération des sous-domaines pour "example.com"
 
--d, --dir    Énumération des répertoires d'un site.
+--dir    Énumération des répertoires d'un site.
         Exemple : python3 dnspanik.py --dir https://example.com /path/to/wordlist.txt
         --> Réalise l'énumération des répertoires pour "example.com"
 
 Option(s) supplémentaire(s):
 
 -v, --verbose    Active le mode verbeux pour afficher des détails supplémentaires lors de l'exécution.
+--delete         Supprimer la base de donnée actuelle.
 
 Exemple complet:
 
