@@ -209,7 +209,7 @@ def custom_parse_args():
 
     if len(sys.argv) > 5:           # Le programme attend au maximum 4 arguments. On écrit 5 car le lanceur compte comme 0.
 
-        print("err: trop d'arguments."); exit(0)
+        print("err: too many args."); exit(0)
 
     for args in sys.argv:
         
@@ -217,7 +217,7 @@ def custom_parse_args():
 
             if args not in args_lst:
 
-                print(f"Argument '{args}' inconnu"); help_display()
+                print(f"Unknown '{args}' args"); help_display()
                 exit(0)
     
     return 0
@@ -371,12 +371,12 @@ def directories_req(file_path):                         # Fonction d'énumérati
             
             except requests.exceptions.MissingSchema as e:      # gestion des erreurs
 
-                print(f"Err: Schema manquant dans l'url.\nVoulez-vous dire 'http://www.{url}' ?")
+                print(f"Err: url missing schema.\nVoulez-vous dire 'http://www.{url}' ?")
                 exit(0)
 
             except (requests.exceptions.ConnectionError):
 
-                print(f"Err: Impossible de se connecter à '{url}'\nVeuillez vérifier l'url.\n")
+                print(f"Err: Can't connect to '{url}'\nPlease verify url.\n")
                 exit(0)
 
         
@@ -393,31 +393,31 @@ def help_display():
     #Une fonction dédiée à afficher un guide pour l'utilisateur, expliquant les options et leur utilisation. Cette fonction est invoquée si l'argument -h est fourni.
 
     print("""
-===== Aide de l'outil dnspanik =====
+===== Help for DnsPanik =====
 \n
-Usage :
+    python3 dnspanik.py [option] <target> </path/to/wordlist.txt>
 
-    python3 dnspanik.py [option] <cible> </path/to/wordlist.txt>
+Main commands:
 
-Commandes principales :
+--sub List of subdomains of a site.
+        Example: python3 dnspanik.py --sub example.com /path/to/wordlist.txt
+        --> Create subdomain enumeration for "example.com"
 
---sub    Énumération des sous-domaines d'un site.
-        Exemple : python3 dnspanik.py --sub example.com /path/to/wordlist.txt
-        --> Réalise l'énumération des sous-domaines pour "example.com"
+--dir Enumeration of a site's directories.
+        Example: python3 dnspanik.py --dir https://example.com /path/to/wordlist.txt
+        --> Carry out the directory enumeration for "example.com"
 
---dir    Énumération des répertoires d'un site.
-        Exemple : python3 dnspanik.py --dir https://example.com /path/to/wordlist.txt
-        --> Réalise l'énumération des répertoires pour "example.com"
+Additional option(s):
 
-Option(s) supplémentaire(s):
+-v, --verbose Enables verbose mode to display additional details at runtime.
 
--v, --verbose    Active le mode verbeux pour afficher des détails supplémentaires lors de l'exécution.
---delete         Supprimer la base de donnée actuelle.
+--delete Delete the current database.
 
-Exemple complet:
+Complete example:
 
     python3 dnspanik.py --sub example.com /path/to/wordlist.txt -v
-    --> Effectue une énumération des sous-domaines avec affichage détaillé.
+    --> Perform an enumeration of subdomains with detailed display.
+
 
 ======================================
     """)
@@ -494,7 +494,7 @@ if __name__ == "__main__":
 
     except FileNotFoundError:
 
-        print("Err: fichier non trouvé.\nPressez Entrer pour continuer...")
+        print("Err: File not found.\nPress Enter to continue...")
         input()
         help_display()
         exit(0)
