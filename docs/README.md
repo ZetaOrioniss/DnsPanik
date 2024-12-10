@@ -1,24 +1,28 @@
+Installation des dépendances:
+
+	pip install -r requirements.txt
 
 
-Objectif de l'outil en python:
+Énumération de sous-domaines :
 
-    -Fournir des solutions d'énumération d'un domaine à l'aide d'une wordlist:
+    Recherche et identifie les sous-domaines d'un domaine cible à l'aide d'une liste de mots (wordlist).
+    Vérifie si les sous-domaines sont actifs (répondent à une requête DNS).
+    Enregistre les résultats dans une base de données SQLite.
 
-        Lister les répertoires d'un domaine --> afficher leur status, droits d'accès...
+Énumération des répertoires :
 
-            exemple: monsite.fr/repertoire1         existe
-                     monsite.fr/repertoire2         existe mais interdit d'accès
-                     monsite.fr/repertoire3         existe pas
-                     
-        Lister les sous-domaines --> afficher les sous-domaines existants
+    Recherche et identifie les répertoires disponibles sur un site web cible via des requêtes HTTP.
+    Utilise une wordlist pour tester les noms de répertoires courants.
+    Enregistre les répertoires valides dans une base de données SQLite.
 
-            exemple: www.monsite.fr
-                     aaa.monsite.fr
-                     bbb.monsite.fr
-                     ccc.monsite.fr
+Stockage des résultats :
 
-l'utilisteur devra préciser un domaine (exemple.fr), et une wordlist (/chemin/vers/fichier.txt)
+    Les données des domaines, sous-domaines et répertoires sont sauvegardées dans une base de données SQLite locale (default.db) pour consultation ou réutilisation future.
 
-Partie base de donnée:
+Options de ligne de commande :
 
-    
+    --sub : Lance l'énumération des sous-domaines.
+    --dir : Lance l'énumération des répertoires.
+    --verbose : Mode verbeux pour afficher des détails supplémentaires pendant l'exécution.
+    --delete : Supprime la base de données existante.
+    -h ou --help : Affiche un guide d'utilisation détaillé.
